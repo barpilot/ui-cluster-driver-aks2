@@ -147,7 +147,7 @@
 
         <div class="row">
           <div class="col span-6">
-            <label class="acc-label">{{t "clusterNew.azureaks.enableHttpApplicationRouting.label"}}</label>
+            <label class="acc-label">HTTP Application Routing</label>
             <div class="form-control-static">
               <label class="hand mr-20">
                 {{radio-button
@@ -166,7 +166,7 @@
             </div>
           </div>
           <div class="col span-6">
-            <label class="acc-label">{{t "clusterNew.azureaks.enableMonitoring.label"}}</label>
+            <label class="acc-label">Monitoring</label>
             <div class="form-control-static">
               <label class="hand mr-20">
                 {{radio-button
@@ -188,11 +188,10 @@
 
         <div class="row">
           <div class="col span-12 mb-0">
-            <label class="acc-label">{{t "clusterNew.azureaks.tags.label"}}</label>
+            <label class="acc-label">Tags</label>
             {{form-key-value
               initialMap=tags
               changed=(action 'setTags')
-              addActionLabel="clusterNew.azureaks.tags.addActionLabel"
             }}
           </div>
         </div>
@@ -260,7 +259,7 @@
                   id="azureaks-config-count"
                   min=1
                   value=config.count
-                  placeholder=(t "clusterNew.azureaks.count.placeholder")
+                  placeholder="e.g. 1"
               }}
             </div>
             <div class="col span-6">
@@ -302,122 +301,99 @@
           </div>
         </div>
         <div class="row">
-          <div class="col span-12">
-            {{t "clusterNew.azureaks.networking.label"}}
-            <div class="radio">
-              <label class={{concat (if editing "text-muted") " acc-label mr-20"}}>
-                {{radio-button
-                    selection=netMode
-                    value="default"
-                    disabled=editing
+          <div class="row">
+            <div class="col span-6 mt-0">
+              <label class="acc-label" for="azureaks-advanced-virtual-network">{{t "clusterNew.azureaks.networking.vnet.label"}}</label>
+              {{#input-or-display
+                    editable=isNew
+                    value=networkChoice
+              }}
+                {{new-select
+                    classNames="form-control"
+                    content=filteredVirtualNetworks
+                    id="azureaks-advanced-virtual-network"
+                    localizedPrompt=false
+                    optionLabelPath="name"
+                    optionValuePath="value"
+                    optionGroupPath="group"
+                    prompt=(t "clusterNew.azureaks.networking.vnet.prompt")
+                    value=networkChoice
                 }}
-                {{t "clusterNew.azureaks.networking.default"}}
-              </label>
-              <label class={{concat (if editing "text-muted") " acc-label"}}>
-                {{radio-button
-                    selection=netMode
-                    value="advanced"
-                    disabled=editing
-                }}
-                {{t "clusterNew.azureaks.networking.advanced"}}
-              </label>
+              {{/input-or-display}}
             </div>
           </div>
-          {{#if (eq netMode "advanced")}}
-            <div class="row">
-              <div class="col span-6 mt-0">
-                <label class="acc-label" for="azureaks-advanced-virtual-network">{{t "clusterNew.azureaks.networking.vnet.label"}}</label>
-                {{#input-or-display
-                     editable=isNew
-                     value=networkChoice
+          <div class="row">
+            <div class="col span-6 mt-0">
+              <label class="acc-label" for="azureaks-service-cidr-id">{{t "clusterNew.azureaks.networking.serviceCidr.label"}}</label>
+              {{#input-or-display
+                    editable=isNew
+                    value=config.serviceCidr
+              }}
+                {{input
+                    classNames="form-control"
+                    id="azureaks-service-cidr-id"
+                    placeholder=(t "clusterNew.azureaks.networking.serviceCidr.prompt")
+                    type="text"
+                    value=config.serviceCidr
                 }}
-                  {{new-select
-                      classNames="form-control"
-                      content=filteredVirtualNetworks
-                      id="azureaks-advanced-virtual-network"
-                      localizedPrompt=false
-                      optionLabelPath="name"
-                      optionValuePath="value"
-                      optionGroupPath="group"
-                      prompt=(t "clusterNew.azureaks.networking.vnet.prompt")
-                      value=networkChoice
-                  }}
-                {{/input-or-display}}
-              </div>
+              {{/input-or-display}}
+              <p class="help-block">
+                {{t "clusterNew.azureaks.networking.serviceCidr.help"}}
+              </p>
             </div>
-            <div class="row">
-              <div class="col span-6 mt-0">
-                <label class="acc-label" for="azureaks-service-cidr-id">{{t "clusterNew.azureaks.networking.serviceCidr.label"}}</label>
-                {{#input-or-display
-                     editable=isNew
-                     value=config.serviceCidr
+            <div class="col span-6 mt-0">
+              <label class="acc-label" for="azureaks-dns-service-ip">{{t "clusterNew.azureaks.networking.dnsServiceIp.label"}}</label>
+              {{#input-or-display
+                    editable=isNew
+                    value=config.dnsServiceIp
+              }}
+                {{input
+                    classNames="form-control"
+                    id="azureaks-dns-service-ip"
+                    type="text"
+                    value=config.dnsServiceIp
+                    placeholder=(t "clusterNew.azureaks.networking.dnsServiceIp.placeholder")
                 }}
-                  {{input
-                      classNames="form-control"
-                      id="azureaks-service-cidr-id"
-                      placeholder=(t "clusterNew.azureaks.networking.serviceCidr.prompt")
-                      type="text"
-                      value=config.serviceCidr
-                  }}
-                {{/input-or-display}}
-                <p class="help-block">
-                  {{t "clusterNew.azureaks.networking.serviceCidr.help"}}
-                </p>
-              </div>
-              <div class="col span-6 mt-0">
-                <label class="acc-label" for="azureaks-dns-service-ip">{{t "clusterNew.azureaks.networking.dnsServiceIp.label"}}</label>
-                {{#input-or-display
-                     editable=isNew
-                     value=config.dnsServiceIp
-                }}
-                  {{input
-                      classNames="form-control"
-                      id="azureaks-dns-service-ip"
-                      type="text"
-                      value=config.dnsServiceIp
-                      placeholder=(t "clusterNew.azureaks.networking.dnsServiceIp.placeholder")
-                  }}
-                {{/input-or-display}}
-                <p class="help-block">
-                  {{t "clusterNew.azureaks.networking.dnsServiceIp.help"}}
-                </p>
-              </div>
+              {{/input-or-display}}
+              <p class="help-block">
+                {{t "clusterNew.azureaks.networking.dnsServiceIp.help"}}
+              </p>
             </div>
-            <div class="row">
-              <div class="col span-6 mt-0">
-                <label class="acc-label" for="azureaks-docker-service-ip">{{t "clusterNew.azureaks.networking.dockerBridgeCidr.label"}}</label>
-                {{#input-or-display
-                     editable=isNew
-                     value=config.dockerBridgeCidr
+          </div>
+          <div class="row">
+            <div class="col span-6 mt-0">
+              <label class="acc-label" for="azureaks-docker-service-ip">{{t "clusterNew.azureaks.networking.dockerBridgeCidr.label"}}</label>
+              {{#input-or-display
+                    editable=isNew
+                    value=config.dockerBridgeCidr
+              }}
+                {{input
+                    classNames="form-control"
+                    id="azureaks-docker-service-ip"
+                    type="text"
+                    value=config.dockerBridgeCidr
+                    placeholder=(t "clusterNew.azureaks.networking.dockerBridgeCidr.placeholder")
                 }}
-                  {{input
-                      classNames="form-control"
-                      id="azureaks-docker-service-ip"
-                      type="text"
-                      value=config.dockerBridgeCidr
-                      placeholder=(t "clusterNew.azureaks.networking.dockerBridgeCidr.placeholder")
-                  }}
-                {{/input-or-display}}
-                <p class="help-block">
-                  {{t "clusterNew.azureaks.networking.dockerBridgeCidr.help"}}
-                </p>
-              </div>
-              <div class="col span-6 mt-0">
-                <label class="acc-label">{{t "clusterNew.azureaks.networkPolicy.label"}}</label>
-                {{#input-or-display
-                     editable=isNew
-                     value=config.networkPolicy
-                }}
-                  {{searchable-select
-                      class="form-control"
-                      content=networkPolicyContent
-                      value=config.networkPolicy
-                      placeholder=(t "clusterNew.azureaks.networkPolicy.placeholder")
-                  }}
-                {{/input-or-display}}
-              </div>
+              {{/input-or-display}}
+              <p class="help-block">
+                {{t "clusterNew.azureaks.networking.dockerBridgeCidr.help"}}
+              </p>
             </div>
-          {{/if}}
+            <div class="col span-6 mt-0">
+              <label class="acc-label">Network Policy</label>
+              {{#input-or-display
+                    editable=isNew
+                    value=config.networkPolicy
+              }}
+                {{searchable-select
+                    class="form-control"
+                    content=networkPolicyContent
+                    value=config.networkPolicy
+                    placeholder="Select a Network Policy"
+                }}
+              {{/input-or-display}}
+            </div>
+          </div>
         </div>
 
         <div class="row">

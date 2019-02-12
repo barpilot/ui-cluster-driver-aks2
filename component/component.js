@@ -22,11 +22,11 @@ const all          = Ember.RSVP.all;
 /*!!!!!!!!!!!GLOBAL CONST END!!!!!!!!!!!*/
 
 const on            = Ember.on;
-const equal         = Ember.equal;
+const equal         = Ember.computed.equal;
 const setProperties = Ember.setProperties;
+const hash          = Ember.RSVP.hash;
 
 import ipaddr from 'ipaddr.js';
-import { hash } from 'rsvp';
 
 import {
   sizes,
@@ -42,13 +42,6 @@ export default Ember.Component.extend(ClusterDriver, {
   app:         service(),
   router:      service(),
 /*!!!!!!!!!!!DO NOT CHANGE END!!!!!!!!!!!*/
-
-  zones:                  aksRegions,
-  versions:               null,
-  machineSizes:           sizes,
-  step:                   1,
-  netMode:                'default',
-  monitoringRegionConent: [],
 
   init() {
     /*!!!!!!!!!!!DO NOT CHANGE START!!!!!!!!!!!*/
@@ -68,19 +61,20 @@ export default Ember.Component.extend(ClusterDriver, {
 
     if ( !config ) {
       config = this.get('globalStore').createRecord({
+        type:                         configField,
         agentPoolName:                'rancher',
-        type:                         'azureKubernetesServiceConfig',
         agentOsdiskSize:              100,
         adminUsername:                'azureuser',
         kubernetesVersion:            '1.11.5',
         count:                        3,
         agentVmSize:                  'Standard_D2_v2',
-        location:                     'eastus',
+        location:                     'westeurope',
         enableHttpApplicationRouting: false,
         enableMonitoring:             true,
+        netMode:                      "default",
       });
 
-      set(this, 'cluster.%%DRIVERNAME%%EngineConfig', config);
+      set(this, `cluster.${ configField }`, config);
     } else {
       const tags = get(config, 'tags') || []
       const map = {}
@@ -92,15 +86,30 @@ export default Ember.Component.extend(ClusterDriver, {
       })
       set(this, 'tags', map)
 
-      if (get(config, 'networkPolicy')) {
-        set(this, 'netMode', 'advanced')
-      }
+      // if (get(config, 'networkPolicy')) {
+      //   set(this, 'netMode', 'advanced')
+      // }
     }
   },
 
   config: alias('cluster.%%DRIVERNAME%%EngineConfig'),
 
+  zones:                  aksRegions,
+  versions:               null,
+  machineSizes:           sizes,
+  step:                   1,
+  monitoringRegionConent: [],
+
+  editing:       equal('mode', 'edit'),
+  isNew:         equal('mode', 'new'),
+
   actions: {
+    save() {},
+    cancel(){
+      // probably should not remove this as its what every other driver uses to get back
+      get(this, 'router').transitionTo('global-admin.clusters.index');
+    },
+
     authenticate(cb) {
       const store = get(this, 'globalStore')
       const data = {
@@ -152,20 +161,20 @@ export default Ember.Component.extend(ClusterDriver, {
     },
   },
 
-  resetAdvancedOptions: on('init', observer('netMode', function() {
-    if (get(this, 'netMode') === 'default') {
-      const config = get(this, 'config');
+  // resetAdvancedOptions: on('init', observer('netMode', function() {
+  //   if (get(this, 'netMode') === 'default') {
+  //     const config = get(this, 'config');
 
-      setProperties(config, {
-        subnet:                      null,
-        virtualNetwork:              null,
-        virtualNetworkResourceGroup: null,
-        serviceCidr:                 null,
-        dnsServiceIp:                null,
-        dockerBridgeCidr:            null
-      });
-    }
-  })),
+  //     setProperties(config, {
+  //       subnet:                      null,
+  //       virtualNetwork:              null,
+  //       virtualNetworkResourceGroup: null,
+  //       serviceCidr:                 null,
+  //       dnsServiceIp:                null,
+  //       dockerBridgeCidr:            null
+  //     });
+  //   }
+  // })),
 
   networkChoice: computed({
     set( key, value = '' ) {
@@ -219,7 +228,7 @@ export default Ember.Component.extend(ClusterDriver, {
   }),
 
   validate() {
-    const intl   = get(this, 'intl');
+    //const intl   = get(this, 'intl');
     let model = get(this, 'cluster');
     let errors = model.validationErrors() || [];
 
@@ -230,11 +239,11 @@ export default Ember.Component.extend(ClusterDriver, {
     }
 
     if ( !get(this, 'config.resourceGroup') ) {
-      errors.push(intl.t('validation.required', { key: intl.t('clusterNew.azureaks.resourceGroup.label') }));
+      errors.push('validation.required', { key: 'clusterNew.azureaks.resourceGroup.label' });
     }
 
     if ( !get(this, 'config.sshPublicKeyContents') ) {
-      errors.push(intl.t('validation.required', { key: intl.t('clusterNew.azureaks.ssh.label') }));
+      errors.push('validation.required', { key: 'clusterNew.azureaks.ssh.label' });
     }
 
     set(this, 'errors', errors);
@@ -243,7 +252,7 @@ export default Ember.Component.extend(ClusterDriver, {
   },
 
   validateVnetInputs() {
-    const intl   = get(this, 'intl');
+    //const intl   = get(this, 'intl');
     const errors = [];
     const config = get(this, 'config');
     const vnet   = get(this, 'virtualNetworks').findBy('name', get(config, 'virtualNetwork'));
@@ -269,10 +278,10 @@ export default Ember.Component.extend(ClusterDriver, {
 
         // check if serviceCidr falls within the VNet/Subnet range
         if (parsedServiceCidr && vnetRange[0].match(parsedServiceCidr)) {
-          errors.pushObject(intl.t('clusterNew.azureaks.errors.included.parsedServiceCidr'));
+          errors.pushObject('clusterNew.azureaks.errors.included.parsedServiceCidr');
         }
       } catch ( err ) {
-        errors.pushObject(intl.t('clusterNew.azureaks.errors.included.serviceCidr'));
+        errors.pushObject('clusterNew.azureaks.errors.included.serviceCidr');
       }
 
       try {
@@ -280,10 +289,10 @@ export default Ember.Component.extend(ClusterDriver, {
 
         // check if dnsService exists in range
         if (parsedDnsServiceIp && vnetRange[0].match(parsedDnsServiceIp, vnetRange[1])) {
-          errors.pushObject(intl.t('clusterNew.azureaks.errors.included.parsedDnsServiceIp'));
+          errors.pushObject('clusterNew.azureaks.errors.included.parsedDnsServiceIp');
         }
       } catch ( err ) {
-        errors.pushObject(intl.t('clusterNew.azureaks.errors.included.dnsServiceIp'));
+        errors.pushObject('clusterNew.azureaks.errors.included.dnsServiceIp');
       }
 
       try {
@@ -291,10 +300,10 @@ export default Ember.Component.extend(ClusterDriver, {
 
         // check that dockerBridge doesn't overlap
         if (parsedDockerBridgeCidr && ( vnetRange[0].match(parsedDockerBridgeCidr) || parsedServiceCidr[0].match(parsedDockerBridgeCidr) )) {
-          errors.pushObject(intl.t('clusterNew.azureaks.errors.included.parsedDockerBridgeCidr'));
+          errors.pushObject('clusterNew.azureaks.errors.included.parsedDockerBridgeCidr');
         }
       } catch ( err ) {
-        errors.pushObject(intl.t('clusterNew.azureaks.errors.included.dockerBridgeCidr'));
+        errors.pushObject('clusterNew.azureaks.errors.included.dockerBridgeCidr');
       }
     }
 
