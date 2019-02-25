@@ -12,7 +12,8 @@
       }}
         <div class="row">
           <div class="col span-6 mb-0">
-            <label class="acc-label" for="azureaks-subscription-id" >{{t "clusterNew.azureaks.subscriptionId.label"}}{{field-required}}</label>
+            <label class="acc-label"
+              for="azureaks-subscription-id">{{t "clusterNew.azureaks.subscriptionId.label"}}{{field-required}}</label>
             {{#input-or-display
                  editable=isEditable
                  value=config.subscriptionId
@@ -27,7 +28,8 @@
             {{/input-or-display}}
           </div>
           <div class="col span-6 mb-0">
-            <label class="acc-label" for="azureaks-tenant-id">{{t "clusterNew.azureaks.tenant.label"}}{{field-required}}</label>
+            <label class="acc-label"
+              for="azureaks-tenant-id">{{t "clusterNew.azureaks.tenant.label"}}{{field-required}}</label>
             {{#input-or-display
                  editable=isEditable
                  value=config.tenantId
@@ -44,7 +46,8 @@
 
         <div class="row">
           <div class="col span-6 mb-0">
-            <label class="acc-label" for="azureaks-client-id">{{t "clusterNew.azureaks.clientId.label"}}{{field-required}}</label>
+            <label class="acc-label"
+              for="azureaks-client-id">{{t "clusterNew.azureaks.clientId.label"}}{{field-required}}</label>
             {{#input-or-display
                  editable=isEditable
                  value=config.clientId
@@ -60,8 +63,9 @@
           </div>
 
           <div class="col span-6 mb-0">
-            <label class="acc-label" for="azureaks-client-secret">{{t "clusterNew.azureaks.clientSecret.label"}}{{field-required}}</label>
-              {{input
+            <label class="acc-label"
+              for="azureaks-client-secret">{{t "clusterNew.azureaks.clientSecret.label"}}{{field-required}}</label>
+            {{input
                   classNames="form-control"
                   id="azureaks-client-secret"
                   placeholder=(t "clusterNew.azureaks.clientSecret.placeholder")
@@ -72,7 +76,8 @@
         </div>
         <div class="row">
           <div class="col span-6">
-            <label class="acc-label" for="azureaks-location">{{t "clusterNew.azureaks.location.label"}}{{field-required}}</label>
+            <label class="acc-label"
+              for="azureaks-location">{{t "clusterNew.azureaks.location.label"}}{{field-required}}</label>
             {{#input-or-display
                  editable=isEditable
                  value=config.location
@@ -118,7 +123,8 @@
       }}
         <div class="row">
           <div class="col span-6">
-            <label class="acc-label" for="azureaks-kube-version">{{t "clusterNew.azureaks.kubernetesVersion.label"}}</label>
+            <label class="acc-label"
+              for="azureaks-kube-version">{{t "clusterNew.azureaks.kubernetesVersion.label"}}</label>
 
             {{form-versions
                 cluster=cluster
@@ -209,7 +215,8 @@
         <div class="row">
           <div class="row">
             <div class="col span-6">
-              <label class="acc-label" for="azureaks-admin-username-prefix">{{t "clusterNew.azureaks.admin.label"}}</label>
+              <label class="acc-label"
+                for="azureaks-admin-username-prefix">{{t "clusterNew.azureaks.admin.label"}}</label>
               {{#input-or-display
                    editable=isNew
                    value=config.adminUsername
@@ -301,9 +308,34 @@
           </div>
         </div>
         <div class="row">
+          <div class="col span-12">
+            {{t "clusterNew.azureaks.networking.label"}}
+            <div class="radio">
+              <label class={{concat (if editing "text-muted") " acc-label mr-20"}}>
+                {{radio-button
+                    selection=networkPlugin
+                    value='kubenet'
+                    disabled=editing
+
+                }}
+                {{t "clusterNew.azureaks.networking.default"}}
+              </label>
+              {{!-- <label class={{concat (if editing "text-muted") " acc-label"}}>
+                {{radio-button
+                    selection=networkPlugin
+                    value="advanced"
+                    disabled=editing
+                }}
+                {{t "clusterNew.azureaks.networking.advanced"}}
+              </label> --}}
+            </div>
+          </div>
+        </div>
+        <div class="row">
           <div class="row">
             <div class="col span-6 mt-0">
-              <label class="acc-label" for="azureaks-advanced-virtual-network">{{t "clusterNew.azureaks.networking.vnet.label"}}</label>
+              <label class="acc-label"
+                for="azureaks-advanced-virtual-network">{{t "clusterNew.azureaks.networking.vnet.label"}}</label>
               {{#input-or-display
                     editable=isNew
                     value=networkChoice
@@ -324,7 +356,29 @@
           </div>
           <div class="row">
             <div class="col span-6 mt-0">
-              <label class="acc-label" for="azureaks-service-cidr-id">{{t "clusterNew.azureaks.networking.serviceCidr.label"}}</label>
+              <label class="acc-label" for="azureaks-pod-cidr-id">Container Network Cidr</label>
+              {{#input-or-display
+                    editable=isNew
+                    value=config.podCidr
+              }}
+                {{input
+                    classNames="form-control"
+                    id="azureaks-pod-cidr-id"
+                    placeholder="e.g. 172.16.0.0/16"
+                    type="text"
+                    value=config.podCidr
+                }}
+              {{/input-or-display}}
+              <p class="help-block">
+                A CIDR notation IP range from which to assign pod cluster IPs. It must not overlap with any Subnet IP
+                ranges. For example: 10.0.0.0/16.
+              </p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col span-6 mt-0">
+              <label class="acc-label"
+                for="azureaks-service-cidr-id">{{t "clusterNew.azureaks.networking.serviceCidr.label"}}</label>
               {{#input-or-display
                     editable=isNew
                     value=config.serviceCidr
@@ -342,7 +396,8 @@
               </p>
             </div>
             <div class="col span-6 mt-0">
-              <label class="acc-label" for="azureaks-dns-service-ip">{{t "clusterNew.azureaks.networking.dnsServiceIp.label"}}</label>
+              <label class="acc-label"
+                for="azureaks-dns-service-ip">{{t "clusterNew.azureaks.networking.dnsServiceIp.label"}}</label>
               {{#input-or-display
                     editable=isNew
                     value=config.dnsServiceIp
@@ -362,7 +417,8 @@
           </div>
           <div class="row">
             <div class="col span-6 mt-0">
-              <label class="acc-label" for="azureaks-docker-service-ip">{{t "clusterNew.azureaks.networking.dockerBridgeCidr.label"}}</label>
+              <label class="acc-label"
+                for="azureaks-docker-service-ip">{{t "clusterNew.azureaks.networking.dockerBridgeCidr.label"}}</label>
               {{#input-or-display
                     editable=isNew
                     value=config.dockerBridgeCidr
@@ -379,7 +435,7 @@
                 {{t "clusterNew.azureaks.networking.dockerBridgeCidr.help"}}
               </p>
             </div>
-            <div class="col span-6 mt-0">
+            {{!-- <div class="col span-6 mt-0">
               <label class="acc-label">Network Policy</label>
               {{#input-or-display
                     editable=isNew
@@ -392,13 +448,14 @@
                     placeholder="Select a Network Policy"
                 }}
               {{/input-or-display}}
-            </div>
+            </div> --}}
           </div>
         </div>
 
         <div class="row">
           <div class="col span-12">
-            <label class="acc-label" for="azureaks-advanced-ssh-pub-key">{{t "clusterNew.azureaks.ssh.label"}}{{field-required}}</label>
+            <label class="acc-label"
+              for="azureaks-advanced-ssh-pub-key">{{t "clusterNew.azureaks.ssh.label"}}{{field-required}}</label>
             {{#input-or-display
                  editable=isEditable
                  value=config.sshPublicKeyContents

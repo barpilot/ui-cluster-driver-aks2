@@ -33,7 +33,7 @@ import {
   aksRegions,
 } from 'ui/utils/azure-choices';
 
-const NETWORK_POLICY = ['Calico']
+// const NETWORK_POLICY = ['Calico']
 
 /*!!!!!!!!!!!DO NOT CHANGE START!!!!!!!!!!!*/
 export default Ember.Component.extend(ClusterDriver, {
@@ -41,8 +41,10 @@ export default Ember.Component.extend(ClusterDriver, {
   configField: '%%DRIVERNAME%%EngineConfig', // 'googleKubernetesEngineConfig'
   app:         service(),
   router:      service(),
-/*!!!!!!!!!!!DO NOT CHANGE END!!!!!!!!!!!*/
+  /*!!!!!!!!!!!DO NOT CHANGE END!!!!!!!!!!!*/
 
+  intl:        service(),
+  
   init() {
     /*!!!!!!!!!!!DO NOT CHANGE START!!!!!!!!!!!*/
     // This does on the fly template compiling, if you mess with this :cry:
@@ -71,7 +73,7 @@ export default Ember.Component.extend(ClusterDriver, {
         location:                     'westeurope',
         enableHttpApplicationRouting: false,
         enableMonitoring:             true,
-        netMode:                      "default",
+        networkPlugin:                "kubenet",
       });
 
       set(this, `cluster.${ configField }`, config);
@@ -104,11 +106,11 @@ export default Ember.Component.extend(ClusterDriver, {
   isNew:         equal('mode', 'new'),
 
   actions: {
-    save() {},
-    cancel(){
-      // probably should not remove this as its what every other driver uses to get back
-      get(this, 'router').transitionTo('global-admin.clusters.index');
-    },
+    // save() {},
+    // cancel(){
+    //   // probably should not remove this as its what every other driver uses to get back
+    //   get(this, 'router').transitionTo('global-admin.clusters.index');
+    // },
 
     authenticate(cb) {
       const store = get(this, 'globalStore')
@@ -218,17 +220,17 @@ export default Ember.Component.extend(ClusterDriver, {
     return get(this, 'config.tenantId') && get(this, 'config.clientId') && get(this, 'config.clientSecret') && get(this, 'config.subscriptionId') && get(this, 'config.location') ? false : true;
   }),
 
-  networkPolicyContent: computed(() => {
-    return NETWORK_POLICY.map((n) => {
-      return {
-        label: n,
-        value: n,
-      }
-    })
-  }),
+  // networkPolicyContent: computed(() => {
+  //   return NETWORK_POLICY.map((n) => {
+  //     return {
+  //       label: n,
+  //       value: n,
+  //     }
+  //   })
+  // }),
 
   validate() {
-    //const intl   = get(this, 'intl');
+    const intl = get(this, 'intl');
     let model = get(this, 'cluster');
     let errors = model.validationErrors() || [];
 
@@ -239,11 +241,11 @@ export default Ember.Component.extend(ClusterDriver, {
     }
 
     if ( !get(this, 'config.resourceGroup') ) {
-      errors.push('validation.required', { key: 'clusterNew.azureaks.resourceGroup.label' });
+      errors.push(intl.t('validation.required', { key: intl.t('clusterNew.azureaks.resourceGroup.label') }));
     }
 
     if ( !get(this, 'config.sshPublicKeyContents') ) {
-      errors.push('validation.required', { key: 'clusterNew.azureaks.ssh.label' });
+      errors.push(intl.t('validation.required', { key: intl.t('clusterNew.azureaks.ssh.label') }));
     }
 
     set(this, 'errors', errors);
@@ -252,7 +254,7 @@ export default Ember.Component.extend(ClusterDriver, {
   },
 
   validateVnetInputs() {
-    //const intl   = get(this, 'intl');
+    const intl   = get(this, 'intl');
     const errors = [];
     const config = get(this, 'config');
     const vnet   = get(this, 'virtualNetworks').findBy('name', get(config, 'virtualNetwork'));
@@ -262,15 +264,28 @@ export default Ember.Component.extend(ClusterDriver, {
       let vnetRange  = ipaddr.parseCIDR(get(subnet, 'addressRange'));
 
       let {
-        serviceCidr, dnsServiceIp, dockerBridgeCidr
+        podCidr, serviceCidr, dnsServiceIp, dockerBridgeCidr
       } = config;
 
+      let parsedPodCidr          = null;
       let parsedServiceCidr      = null;
       let parsedDnsServiceIp     = null;
       let parsedDockerBridgeCidr = null;
 
-      if (!serviceCidr && !dnsServiceIp && !dockerBridgeCidr) {
+      if (!podCidr && !serviceCidr && !dnsServiceIp && !dockerBridgeCidr) {
         errors.pushObject('You must include all required fields when using a Virtual Network');
+      }
+
+
+      try {
+        parsedPodCidr = ipaddr.parseCIDR(podCidr);
+
+        // check if serviceCidr falls within the VNet/Subnet range
+        if (parsedPodCidr && vnetRange[0].match(parsedPodCidr)) {
+          errors.pushObject('Kubernetes pod address range must fall within the selected Virtual Network range.');
+        }
+      } catch ( err ) {
+        errors.pushObject('Kubernetes pod address range must be valid CIDR format.');
       }
 
       try {
@@ -278,10 +293,15 @@ export default Ember.Component.extend(ClusterDriver, {
 
         // check if serviceCidr falls within the VNet/Subnet range
         if (parsedServiceCidr && vnetRange[0].match(parsedServiceCidr)) {
-          errors.pushObject('clusterNew.azureaks.errors.included.parsedServiceCidr');
+          errors.pushObject(intl.t('clusterNew.azureaks.errors.included.parsedServiceCidr'));
         }
       } catch ( err ) {
-        errors.pushObject('clusterNew.azureaks.errors.included.serviceCidr');
+        errors.pushObject(intl.t('clusterNew.azureaks.errors.included.serviceCidr'));
+      }
+
+      // check if serviceCidr falls within the podCidr range
+      if (parsedPodCidr && parsedServiceCidr && parsedServiceCidr[0].match(parsedPodCidr)) {
+        errors.pushObject('Kubernetes service address range must fall within the Pod Network range.');
       }
 
       try {
